@@ -66,12 +66,12 @@ _get_awscli_src_tarball() {
     tarball="$(mktemp -p "$TERMUX_PKG_TMPDIR" "awscli.XXXXXX.tar.gz")"
     sig="$(mktemp -p "$TERMUX_PKG_TMPDIR" "awscli.XXXXXX.sig")"
 
-    if [ -z "$1" ] || [ "$1" != "--latest" ]; then
-        curl -Lo "$tarball" "$TERMUX_PKG_SRCURL"
-        curl -Lo "$sig" "${TERMUX_PKG_SRCURL}.sig"
-    else
+    if [[ "$*" =~ "--latest" ]]; then
         curl -Lo "$tarball" https://awscli.amazonaws.com/awscli.tar.gz
         curl -Lo "$sig" https://awscli.amazonaws.com/awscli.tar.gz.sig
+    else
+        curl -Lo "$tarball" "$TERMUX_PKG_SRCURL"
+        curl -Lo "$sig" "${TERMUX_PKG_SRCURL}.sig"
     fi
 
     if ! gpg --verify "$sig" "$tarball"; then
