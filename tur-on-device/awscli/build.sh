@@ -1,4 +1,4 @@
-#shellcheck shell=bash
+# shellcheck shell=bash
 # shellcheck disable=SC2034
 # shellcheck disable=SC1091
 
@@ -11,13 +11,13 @@ TERMUX_PKG_SRCURL="https://awscli.amazonaws.com/awscli-${TERMUX_PKG_VERSION}.tar
 TERMUX_PKG_SHA256="SKIP_CHECKSUM" # verified using gpg signatures instead
 # TERMUX_PKG_BUILD_DEPENDS="gpgme, python-pip"
 TERMUX_PKG_SETUP_PYTHON=true
-# TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools>=62.4, setuptools_rust, cffi, wheel"
-TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools_rust"
+TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools>=62.4, setuptools_rust, cffi, wheel"
+# TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools_rust"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --prefix=$TERMUX_PREFIX
---with-download-deps
+--with-install-type=portable-exe
 "
 TERMUX_PKG_AUTO_UPDATE=true
 
@@ -122,7 +122,7 @@ termux_step_pre_configure() {
         termux_error_exit "This package doesn't support cross-compiling."
     fi
 
-    # CFLAGS+=" -Wno-incompatible-function-pointer-types"
+    CFLAGS+=" -Wno-incompatible-function-pointer-types"
     # termux_setup_cmake
     # termux_setup_rust
     # termux_setup_python_pip
@@ -145,7 +145,7 @@ termux_step_pre_configure() {
     #     'urllib3>=1.25.4,<1.27' \
     #     'pyinstaller==5.12.0' # 'ruamel.yaml.clib>=0.2.0,<=0.2.7' \
 
-    # pip install "$TERMUX_PKG_SRCDIR"
+    pip install "$TERMUX_PKG_SRCDIR"
 
     # exit 1
 }
