@@ -12,11 +12,11 @@ TERMUX_PKG_SHA256="SKIP_CHECKSUM" # verified using gpg signatures instead
 # TERMUX_PKG_BUILD_DEPENDS="gpgme, python-pip"
 TERMUX_PKG_SETUP_PYTHON=true
 # TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools>=62.4, setuptools_rust, cffi, wheel"
+TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools_rust"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --prefix=$TERMUX_PREFIX
---with-install-type=portable-exe
 --with-download-deps
 "
 TERMUX_PKG_AUTO_UPDATE=true
@@ -65,6 +65,13 @@ _get_awscli_src_tarball() {
 
     tarball="$(mktemp -p "$TERMUX_PKG_TMPDIR" "awscli.XXXXXX.tar.gz")"
     sig="$(mktemp -p "$TERMUX_PKG_TMPDIR" "awscli.XXXXXX.sig")"
+
+    # Add static DNS entries for awscli.amazonaws.com if not already present
+    curl -s awscli.amazonaws.com >/dev/null 2>&1
+    if [ $? -eq 6 ]; then
+        echo "awscli.amazonaws.com" >>/system/etc/static-dns-hosts.txt
+        update-static-dns >/dev/null 2>&1
+    fi
 
     if [[ "$*" =~ "--latest" ]]; then
         curl -Lo "$tarball" https://awscli.amazonaws.com/awscli.tar.gz
