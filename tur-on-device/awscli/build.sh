@@ -126,7 +126,7 @@ termux_step_configure() {
     cd "$TERMUX_PKG_SRCDIR" || exit 1
 
     pip install setuptools-rust
-    pip install -r requirements-base.txt
+    pip install -r requirements/bootstrap.txt
     pip install .
     ./configure --prefix="$TERMUX_PREFIX"
 }
