@@ -11,6 +11,9 @@ TERMUX_PKG_SRCURL="https://awscli.amazonaws.com/awscli-${TERMUX_PKG_VERSION}.tar
 TERMUX_PKG_SHA256="SKIP_CHECKSUM" # verified using gpg signatures instead
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_AUTO_UPDATE=true
+TERMUX_PKG_BUILD_IN_SRC=true
+TERMUX_PKG_BUILD_DEPENDS="ldd"
+TERMUX_SKIP_DEPCHECK=true
 
 _import_awscli_pgp_key() {
     # This key expired 2023-09-17 but it is still in use
@@ -126,21 +129,22 @@ termux_step_configure() {
     cd "$TERMUX_PKG_SRCDIR" || exit 1
 
     pip install setuptools-rust
-    pip install -r requirements/bootstrap.txt
+    pip install -r requirements/download-deps/bootstrap.txt
+    pip install -r requirements/portable-exe-extras.txt
     pip install .
     ./configure --prefix="$TERMUX_PREFIX" --with-install-type=portable-exe
 }
 
 termux_step_make() {
-    # shellcheck source=/dev/null
-    source "$TERMUX_PKG_TMPDIR/venv/bin/activate"
-    cd "$TERMUX_PKG_SRCDIR" || exit 1
     make
 }
 
 termux_step_make_install() {
-    # shellcheck source=/dev/null
-    source "$TERMUX_PKG_TMPDIR/venv/bin/activate"
+
+    pwd
+
+    exit 1
+
     cd "$TERMUX_PKG_SRCDIR" || exit 1
     make install
 }
