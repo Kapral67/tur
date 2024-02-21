@@ -143,3 +143,11 @@ termux_step_configure() {
     pip install .
     ./configure --prefix="$TERMUX_PREFIX" --with-install-type=portable-exe
 }
+
+termux_step_make() {
+    make
+}
+
+termux_step_make_install() {
+    make install
+}
