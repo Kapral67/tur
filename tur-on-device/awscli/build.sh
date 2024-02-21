@@ -115,15 +115,14 @@ termux_step_pre_configure() {
     fi
 
     # CFLAGS+=" -Wno-incompatible-function-pointer-types"
-    mkdir -p "$TERMUX_PKG_SRCDIR/build"
-    python3 -m venv "$TERMUX_PKG_SRCDIR/build/venv"
+    python3 -m venv "$TERMUX_PKG_TMPDIR/venv"
 
-    PYTHON="$TERMUX_PKG_SRCDIR/build/venv/bin/python"
+    PYTHON="$TERMUX_PKG_TMPDIR/venv/bin/python"
 }
 
 termux_step_configure() {
     # shellcheck source=/dev/null
-    source "$TERMUX_PKG_SRCDIR/build/venv/bin/activate"
+    source "$TERMUX_PKG_TMPDIR/venv/bin/activate"
     cd "$TERMUX_PKG_SRCDIR" || exit 1
 
     pip install setuptools-rust
