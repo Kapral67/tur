@@ -13,7 +13,7 @@ TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_BUILD_DEPENDS="ldd"
-TERMUX_SKIP_DEPCHECK=true
+TERMUX_SKIP_DEPCHECK=true # manually manage dependencies since tur has broken dns resolution
 
 _import_awscli_pgp_key() {
     # This key expired 2023-09-17 but it is still in use
@@ -112,14 +112,23 @@ termux_step_get_source() {
     sed -i '/ruamel.yaml.clib/d' "$TERMUX_PKG_SRCDIR/pyproject.toml" # Unneeded dependency since we have python>=3.10
 }
 
+termux_step_post_get_source() {
+    if [ "$TERMUX_APP_PACKAGE_MANAGER" = "apt" ]; then
+        apt update
+        apt install -y "$TERMUX_PKG_BUILD_DEPENDS"
+    elif [ "$TERMUX_APP_PACKAGE_MANAGER" = "pacman" ]; then
+        pacman -Syu "$TERMUX_PKG_BUILD_DEPENDS" --needed --noconfirm
+    else
+        termux_error_exit "Unsupported package manager"
+    fi
+}
+
 termux_step_pre_configure() {
     if [ "${TERMUX_ON_DEVICE_BUILD}" = false ]; then
         termux_error_exit "This package doesn't support cross-compiling."
     fi
 
-    # CFLAGS+=" -Wno-incompatible-function-pointer-types"
     python3 -m venv "$TERMUX_PKG_TMPDIR/venv"
-
     PYTHON="$TERMUX_PKG_TMPDIR/venv/bin/python"
 }
 
@@ -133,18 +142,4 @@ termux_step_configure() {
     pip install -r requirements/portable-exe-extras.txt
     pip install .
     ./configure --prefix="$TERMUX_PREFIX" --with-install-type=portable-exe
-}
-
-termux_step_make() {
-    make
-}
-
-termux_step_make_install() {
-
-    pwd
-
-    exit 1
-
-    cd "$TERMUX_PKG_SRCDIR" || exit 1
-    make install
 }
