@@ -1,0 +1,3 @@
+`aws help` depends on groff or mandoc
+
+debian trouble since installing awscli conflicts with python when in system-sandbox mode; need to solve portable-exe issues

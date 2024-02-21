@@ -5,6 +5,7 @@ TERMUX_PKG_HOMEPAGE=https://aws.amazon.com/cli
 TERMUX_PKG_DESCRIPTION="A Unified Tool to Manage Your AWS Services"
 TERMUX_PKG_LICENSE="Apache-2.0"
 TERMUX_PKG_MAINTAINER="@termux-user-repository"
+TERMUX_PKG_RECOMMENDS="man"
 TERMUX_PKG_VERSION="2.15.21"
 TERMUX_PKG_SRCURL="https://awscli.amazonaws.com/awscli-${TERMUX_PKG_VERSION}.tar.gz"
 TERMUX_PKG_SHA256="SKIP_CHECKSUM" # verified using gpg signatures instead
@@ -127,7 +128,7 @@ termux_step_configure() {
     pip install setuptools-rust
     pip install -r requirements/bootstrap.txt
     pip install .
-    ./configure --prefix="$TERMUX_PREFIX"
+    ./configure --prefix="$TERMUX_PREFIX" --with-install-type=portable-exe
 }
 
 termux_step_make() {
