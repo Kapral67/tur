@@ -9,7 +9,6 @@ TERMUX_PKG_VERSION="2.15.21"
 TERMUX_PKG_SRCURL="https://awscli.amazonaws.com/awscli-${TERMUX_PKG_VERSION}.tar.gz"
 TERMUX_PKG_SHA256="SKIP_CHECKSUM" # verified using gpg signatures instead
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
-TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_AUTO_UPDATE=true
 
 _import_awscli_pgp_key() {
@@ -129,4 +128,18 @@ termux_step_configure() {
     pip install -r requirements/bootstrap.txt
     pip install .
     ./configure --prefix="$TERMUX_PREFIX"
+}
+
+termux_step_make() {
+    # shellcheck source=/dev/null
+    source "$TERMUX_PKG_TMPDIR/venv/bin/activate"
+    cd "$TERMUX_PKG_SRCDIR" || exit 1
+    make
+}
+
+termux_step_make_install() {
+    # shellcheck source=/dev/null
+    source "$TERMUX_PKG_TMPDIR/venv/bin/activate"
+    cd "$TERMUX_PKG_SRCDIR" || exit 1
+    make install
 }
