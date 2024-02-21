@@ -106,6 +106,7 @@ termux_step_get_source() {
     mkdir -p "$TERMUX_PKG_SRCDIR"
     tar --strip-components=1 -xf "$tarball" -C "$TERMUX_PKG_SRCDIR"
     rm -f "$tarball"
+    sed -i '/ruamel.yaml.clib/d' "$TERMUX_PKG_SRCDIR/pyproject.toml" # Unneeded dependency since we have python>=3.10
 }
 
 termux_step_pre_configure() {
