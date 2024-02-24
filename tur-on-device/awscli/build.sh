@@ -7,13 +7,13 @@ TERMUX_PKG_MAINTAINER="@termux-user-repository"
 TERMUX_PKG_RECOMMENDS="man"
 TERMUX_PKG_VERSION="2.15.21"
 TERMUX_PKG_SRCURL="https://awscli.amazonaws.com/awscli-${TERMUX_PKG_VERSION}.tar.gz"
-TERMUX_PKG_SHA256="SKIP_CHECKSUM" # verified using gpg signatures instead
+TERMUX_PKG_SHA256="SKIP_CHECKSUM"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_BUILD_IN_SRC=true
-TERMUX_PKG_DEPENDS="openssl, man"
+TERMUX_PKG_DEPENDS="man"
 TERMUX_PKG_BUILD_DEPENDS="ldd, python-pip"
-TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools-rust"
+TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools-rust, wheel"
 
 _import_awscli_pgp_key() {
 	# This key expired 2023-09-17 but it is still in use
@@ -61,11 +61,11 @@ _get_awscli_src_tarball() {
 	sig="$(mktemp -p "$TERMUX_PKG_TMPDIR" "awscli.XXXXXX.sig")"
 
 	# Add static DNS entries for awscli.amazonaws.com if not already present
-	curl -s awscli.amazonaws.com >/dev/null 2>&1
-	if [ $? -eq 6 ]; then
-		echo "awscli.amazonaws.com" >>/system/etc/static-dns-hosts.txt
-		update-static-dns >/dev/null 2>&1
-	fi
+	# curl -s awscli.amazonaws.com >/dev/null 2>&1
+	# if [ $? -eq 6 ]; then
+	# 	echo "awscli.amazonaws.com" >>/system/etc/static-dns-hosts.txt
+	# 	update-static-dns >/dev/null 2>&1
+	# fi
 
 	if [[ "${*}" =~ "--latest" ]]; then
 		curl -Lo "${tarball}" https://awscli.amazonaws.com/awscli.tar.gz
@@ -112,49 +112,18 @@ termux_step_get_source() {
 	# Unneeded dependency since we have python>=3.10
 	sed -i '/ruamel.yaml.clib/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
 	# TODO: Confirm this is still needed
-	sed -i 's/self._utils.create_venv(self._venv_dir, with_pip=True)/self._utils.create_venv(self._venv_dir, with_pip=False)/g' "${TERMUX_PKG_SRCDIR}/backends/build_system/awscli_venv.py"
+	# sed -i 's/self._utils.create_venv(self._venv_dir, with_pip=True)/self._utils.create_venv(self._venv_dir, with_pip=False)/g' "${TERMUX_PKG_SRCDIR}/backends/build_system/awscli_venv.py"
 }
 
 _build_awscrt() {
 	local toolchain_file
 	local sys_proc
-	local build_type
 
 	termux_setup_cmake
 
-	if ${TERMUX_ON_DEVICE_BUILD}; then
-		build_type="Debug"
-	else
-		build_type="Release"
-	fi
-
 	toolchain_file="$(mktemp -p "${TERMUX_PKG_TMPDIR}" "aws-crt-python.XXXXXX.cmake")"
-	if ${TERMUX_ON_DEVICE_BUILD}; then
-		cat <<-EOF >"${toolchain_file}"
-			set(CMAKE_LINKER "$(command -v ${LD}) ${LDFLAGS}")
-		EOF
-	else
-		CXXFLAGS+=" --target=${CCTERMUX_HOST_PLATFORM}"
-		CFLAGS+=" --target=${CCTERMUX_HOST_PLATFORM}"
-		LDFLAGS+=" --target=${CCTERMUX_HOST_PLATFORM}"
-
-		sys_proc="${TERMUX_ARCH}"
-		if [ "${sys_proc}" = "arm" ]; then
-			sys_proc="armv7-a"
-		fi
-
-		cat <<-EOF >"${toolchain_file}"
-			set(CMAKE_CROSSCOMPILING ON)
-			set(CMAKE_LINKER "${TERMUX_STANDALONE_TOOLCHAIN}/bin/${LD} ${LDFLAGS}")
-			set(CMAKE_SYSTEM_NAME "Android")
-			set(CMAKE_SYSTEM_VERSION "${TERMUX_PKG_API_LEVEL}")
-			set(CMAKE_SYSTEM_PROCESSOR "${TERMUX_ARCH}")
-			set(CMAKE_ANDROID_STANDALONE_TOOLCHAIN "${TERMUX_STANDALONE_TOOLCHAIN}")
-			set(CMAKE_ANDROID_NDK "${NDK}")
-		EOF
-	fi
-
-	cat <<-EOF >>"${toolchain_file}"
+	cat <<-EOF >"${toolchain_file}"
+		set(CMAKE_LINKER "$(command -v ${LD}) ${LDFLAGS}")
 		set(CMAKE_BUILD_TYPE "${build_type}")
 		set(CMAKE_C_FLAGS "${CFLAGS} ${CPPFLAGS}")
 		set(CMAKE_CXX_FLAGS "${CXXFLAGS} ${CPPFLAGS}")
@@ -167,8 +136,8 @@ _build_awscrt() {
 		set(CMAKE_USE_SYSTEM_LIBRARIES ON)
 	EOF
 
-	CMAKE_TOOLCHAIN_FILE="${toolchain_file}" AWS_CRT_BUILD_USE_SYSTEM_LIBCRYPTO=1 \
-		pip3 install --no-binary :all: "awscrt==${*}"
+	# FIXME: CMAKE_TOOLCHAIN_FILE="${toolchain_file}" AWS_CRT_BUILD_USE_SYSTEM_LIBCRYPTO=1 \
+	pip3 install --no-binary :all: "awscrt==${*}"
 
 	rm -f "${toolchain_file}"
 }
