@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e -u
 
-: ${TERMUX_BUILDER_IMAGE_NAME:=ghcr.io/termux-user-repository/termux-docker-android-7:$ARCH}
+: ${TERMUX_BUILDER_IMAGE_NAME:=termux/termux-docker:$ARCH}
 : ${CONTAINER_NAME:=termux-$ARCH}
 
 CONTAINER_HOME_DIR=/data/data/com.termux/files/home
@@ -29,14 +29,14 @@ $SUDO docker start $CONTAINER_NAME >/dev/null 2>&1 || {
 		--name $CONTAINER_NAME \
 		--network=host \
 		--volume $REPOROOT:$CONTAINER_HOME_DIR/termux-packages \
-		--security-opt seccomp=unconfined \
-		--tty \
+        --security-opt seccomp:unconfined \
+        --tty \
 		-w $CONTAINER_HOME_DIR/termux-packages \
 		$TERMUX_BUILDER_IMAGE_NAME
 }
 
 if [ "$#" -eq  "0" ]; then
-	$SUDO docker exec --interactive $DOCKER_TTY $CONTAINER_NAME bash
+	$SUDO docker exec --interactive $DOCKER_TTY $CONTAINER_NAME /entrypoint.sh
 else
-	$SUDO docker exec --interactive $DOCKER_TTY $CONTAINER_NAME "$@"
+	$SUDO docker exec --interactive $DOCKER_TTY $CONTAINER_NAME /entrypoint.sh "$@"
 fi

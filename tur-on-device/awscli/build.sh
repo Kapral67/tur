@@ -11,9 +11,10 @@ TERMUX_PKG_SHA256="SKIP_CHECKSUM"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_BUILD_IN_SRC=true
+TERMUX_WITHOUT_DEPVERSION_BINDING=true
 TERMUX_PKG_DEPENDS="man"
-TERMUX_PKG_BUILD_DEPENDS="ldd, python-pip"
-TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools-rust, wheel"
+TERMUX_PKG_BUILD_DEPENDS="ldd, python-awscrt, python-cryptography"
+# TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools-rust, wheel"
 
 _import_awscli_pgp_key() {
 	# This key expired 2023-09-17 but it is still in use
@@ -111,6 +112,9 @@ termux_step_get_source() {
 	rm -f "${tarball}"
 	# Unneeded dependency since we have python>=3.10
 	sed -i '/ruamel.yaml.clib/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
+	sed -i '/awscrt/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
+	sed -i '/cryptography/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
+	sed -i '/pip/d' "${TERMUX_PKG_SRCDIR}/requirements/bootstrap.txt"
 	# TODO: Confirm this is still needed
 	# sed -i 's/self._utils.create_venv(self._venv_dir, with_pip=True)/self._utils.create_venv(self._venv_dir, with_pip=False)/g' "${TERMUX_PKG_SRCDIR}/backends/build_system/awscli_venv.py"
 }
@@ -155,8 +159,8 @@ termux_step_pre_configure() {
 	fi
 
 	local requirements
-	local awscrt_version
-	local cryptography_version
+	# local awscrt_version
+	# local cryptography_version
 
 	pip3 install pip-tools
 
@@ -164,16 +168,16 @@ termux_step_pre_configure() {
 	pip-compile --strip-extras --allow-unsafe --no-annotate -qo "${requirements}" \
 		requirements/download-deps/bootstrap.txt requirements/portable-exe-extras.txt pyproject.toml
 
-	awscrt_version="$(grep -oP 'awscrt==\K\d+[.\d+]*' "${requirements}")"
-	sed -i '/awscrt/d' "${requirements}"
+	# awscrt_version="$(grep -oP 'awscrt==\K\d+[.\d+]*' "${requirements}")"
+	# sed -i '/awscrt/d' "${requirements}"
 
-	cryptography_version="$(grep -oP 'cryptography==\K\d+[.\d+]*' "${requirements}")"
-	sed -i '/cryptography/d' "${requirements}"
+	# cryptography_version="$(grep -oP 'cryptography==\K\d+[.\d+]*' "${requirements}")"
+	# sed -i '/cryptography/d' "${requirements}"
 
 	pip3 install -r "${requirements}"
 
-	_build_awscrt "${awscrt_version}"
-	_build_cryptography "${cryptography_version}"
+	# _build_awscrt "${awscrt_version}"
+	# _build_cryptography "${cryptography_version}"
 }
 
 termux_step_configure() {
