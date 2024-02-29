@@ -14,7 +14,6 @@ TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_WITHOUT_DEPVERSION_BINDING=true
 TERMUX_PKG_DEPENDS="man"
 TERMUX_PKG_BUILD_DEPENDS="ldd, python-pip"
-# TERMUX_PKG_PYTHON_COMMON_DEPS="setuptools-rust, wheel"
 
 _import_awscli_pgp_key() {
 	# This key expired 2023-09-17 but it is still in use
@@ -61,13 +60,6 @@ _get_awscli_src_tarball() {
 	tarball="$(mktemp -p "$TERMUX_PKG_TMPDIR" "awscli.XXXXXX.tar.gz")"
 	sig="$(mktemp -p "$TERMUX_PKG_TMPDIR" "awscli.XXXXXX.sig")"
 
-	# Add static DNS entries for awscli.amazonaws.com if not already present
-	# curl -s awscli.amazonaws.com >/dev/null 2>&1
-	# if [ $? -eq 6 ]; then
-	# 	echo "awscli.amazonaws.com" >>/system/etc/static-dns-hosts.txt
-	# 	update-static-dns >/dev/null 2>&1
-	# fi
-
 	if [[ "${*}" =~ "--latest" ]]; then
 		curl -Lo "${tarball}" https://awscli.amazonaws.com/awscli.tar.gz
 		curl -Lo "${sig}" https://awscli.amazonaws.com/awscli.tar.gz.sig
@@ -113,72 +105,46 @@ termux_step_get_source() {
 	# Unneeded dependency since we have python>=3.10
 	sed -i '/ruamel.yaml.clib/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
 	# Unsafe dependency
-	sed -i '/pip/d' "${TERMUX_PKG_SRCDIR}/requirements/bootstrap.txt"
+	# sed -i '/pip/d' "${TERMUX_PKG_SRCDIR}/requirements/bootstrap.txt"
 	# TODO: Confirm this is still needed
 	# sed -i 's/self._utils.create_venv(self._venv_dir, with_pip=True)/self._utils.create_venv(self._venv_dir, with_pip=False)/g' "${TERMUX_PKG_SRCDIR}/backends/build_system/awscli_venv.py"
 }
-
-# _build_awscrt() {
-# local toolchain_file
-# local sys_proc
-
-# termux_setup_cmake
-
-# toolchain_file="$(mktemp -p "${TERMUX_PKG_TMPDIR}" "aws-crt-python.XXXXXX.cmake")"
-# cat <<-EOF >"${toolchain_file}"
-# 	set(CMAKE_LINKER "$(command -v ${LD}) ${LDFLAGS}")
-# 	set(CMAKE_BUILD_TYPE "${build_type}")
-# 	set(CMAKE_C_FLAGS "${CFLAGS} ${CPPFLAGS}")
-# 	set(CMAKE_CXX_FLAGS "${CXXFLAGS} ${CPPFLAGS}")
-# 	set(CMAKE_FIND_ROOT_PATH "${TERMUX_PREFIX}")
-# 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-# 	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
-# 	set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
-# 	set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
-# 	set(CMAKE_PREFIX_PATH "${TERMUX_PREFIX}")
-# 	set(CMAKE_USE_SYSTEM_LIBRARIES ON)
-# EOF
-
-# FIXME: CMAKE_TOOLCHAIN_FILE="${toolchain_file}" AWS_CRT_BUILD_USE_SYSTEM_LIBCRYPTO=1 \
-# pip3 install --no-binary :all: "awscrt==${*}"
-
-# rm -f "${toolchain_file}"
-# }
 
 termux_step_pre_configure() {
 	if ! ${TERMUX_ON_DEVICE_BUILD}; then
 		termux_error_exit "This package doesn't support cross-compiling."
 	fi
 
-	local requirements
-	local awscrt_version
-	local cryptography_version
+	# local awscrt_version
+	# local cryptography_version
+	# awscrt_version="$(grep -oP 'awscrt\K[=.<,>\d]+' pyproject.toml)"
+	# cryptography_version="$(grep -oP 'cryptography\K[=.<,>\d]+' pyproject.toml)"
 
-	awscrt_version="$(grep -oP 'awscrt==\K\d+[.\d+]*' "${requirements}")"
-	cryptography_version="$(grep -oP 'cryptography==\K\d+[.\d+]*' "${requirements}")"
-	sed -i '/awscrt/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
-	sed -i '/cryptography/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
+	# sed -i '/awscrt/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
+	# sed -i '/cryptography/d' "${TERMUX_PKG_SRCDIR}/pyproject.toml"
 
-	pip3 install pip-tools
+	# pip3 install pip-tools
+	# local requirements
+	# requirements="$(mktemp -p "${TERMUX_PKG_SRCDIR}" "awscli-requirements.XXXXXX.txt")"
+	# pip-compile --strip-extras --allow-unsafe --no-annotate -qo "${requirements}" \
+	# 	requirements/download-deps/bootstrap.txt requirements/portable-exe-extras.txt pyproject.toml
+	# pip3 install -r "${requirements}"
+	# rm -f "${requirements}"
 
-	requirements="$(mktemp -p "${TERMUX_PKG_SRCDIR}" "awscli-requirements.XXXXXX.txt")"
-	pip-compile --strip-extras --allow-unsafe --no-annotate -qo "${requirements}" \
-		requirements/download-deps/bootstrap.txt requirements/portable-exe-extras.txt pyproject.toml
+	# termux_setup_cmake
+	# # AWS_CRT_BUILD_USE_SYSTEM_LIBCRYPTO=1
+	# pip3 install "awscrt${awscrt_version}"
 
-	pip3 install -r "${requirements}"
-	pip3 install --no-binary :all: "awscrt==$awscrt_version"
-
-	termux_setup_rust
-	PYO3_CROSS_LIB_DIR="${TERMUX_PREFIX}/lib" CARGO_BUILD_TARGET="${CARGO_TARGET_NAME}" \
-		pip3 install "cryptography==$cryptography_version"
-
-	# _build_awscrt "${awscrt_version}"
+	# termux_setup_rust
+	# PYO3_CROSS_LIB_DIR="${TERMUX_PREFIX}/lib" CARGO_BUILD_TARGET="${CARGO_TARGET_NAME}" \
+	# 	pip3 install "cryptography${cryptography_version}"
 }
 
 termux_step_configure() {
-	# cannot use `--with-download-deps` here because it creates a venv but we want to use
-	# crossenv provided by `termux_setup_python_pip` via `TERMUX_PKG_SETUP_PYTHON=true`
-	./configure --prefix="${TERMUX_PREFIX}" --with-install-type=portable-exe
+	termux_setup_cmake
+	termux_setup_rust
+	PYO3_CROSS_LIB_DIR="${TERMUX_PREFIX}/lib" CARGO_BUILD_TARGET="${CARGO_TARGET_NAME}" \
+		./configure --prefix="${TERMUX_PREFIX}" --with-install-type=portable-exe --with-download-deps
 }
 
 termux_step_make() {
