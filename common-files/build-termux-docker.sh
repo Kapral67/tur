@@ -23,7 +23,8 @@ fi
 echo "Running container '$CONTAINER_NAME' from image '$TERMUX_BUILDER_IMAGE_NAME'..."
 
 $SUDO docker start $CONTAINER_NAME >/dev/null 2>&1 || {
-	echo "Creating new container..."
+    $SUDO docker pull $TERMUX_BUILDER_IMAGE_NAME
+    echo "Creating new container..."
 	$SUDO docker run \
 		--detach \
 		--name $CONTAINER_NAME \
